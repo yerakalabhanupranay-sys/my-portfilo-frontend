@@ -10,7 +10,7 @@ const ProjectManager = () => {
     const [editingProject, setEditingProject] = useState(null);
     const [uploadLoading, setUploadLoading] = useState(false);
 
-    const { data: projects, isLoading } = useQuery({
+    const { data: projects } = useQuery({
         queryKey: ['projects'],
         queryFn: () => projectService.getAll().then(res => res.data),
     });
@@ -42,7 +42,7 @@ const ProjectManager = () => {
             const { data } = await uploadService.upload(file);
             setEditingProject({ ...editingProject, image_url: data.url });
             toast.success('Image uploaded');
-        } catch (err) {
+        } catch {
             toast.error('Upload failed');
         } finally {
             setUploadLoading(false);
@@ -69,8 +69,8 @@ const ProjectManager = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold">Manage Projects</h2>
+            <div className="flex justify-between items-center bg-white dark:bg-dark-lighter p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Manage Projects</h2>
                 <button onClick={() => { setEditingProject(null); setIsModalOpen(true); }} className="btn-primary flex items-center">
                     <Plus size={18} className="mr-2" /> Add Project
                 </button>
@@ -78,24 +78,27 @@ const ProjectManager = () => {
 
             <div className="grid grid-cols-1 gap-4">
                 {projects?.map((project) => (
-                    <div key={project.id} className="glass p-4 rounded-xl flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                            <img src={project.image_url} className="w-16 h-16 object-cover rounded-lg" alt="" />
+                    <div key={project.id} className="glass p-5 rounded-2xl flex items-center justify-between hover:border-primary-500/30 transition-all duration-300">
+                        <div className="flex items-center space-x-5">
+                            <div className="relative group">
+                                <img src={project.image_url} className="w-20 h-20 object-cover rounded-xl shadow-md" alt="" />
+                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
+                            </div>
                             <div>
-                                <h3 className="font-bold">{project.title}</h3>
-                                <p className="text-sm text-slate-500">{project.tech_stack.join(', ')}</p>
+                                <h3 className="font-bold text-lg text-slate-800 dark:text-white">{project.title}</h3>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{project.tech_stack.join(', ')}</p>
                             </div>
                         </div>
                         <div className="flex space-x-2">
                             <button
                                 onClick={() => { setEditingProject(project); setIsModalOpen(true); }}
-                                className="p-2 text-blue-500 hover:bg-blue-50 rounded"
+                                className="p-2.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 rounded-xl transition-colors"
                             >
                                 <Edit2 size={18} />
                             </button>
                             <button
                                 onClick={() => { if (confirm('Delete?')) deleteMutation.mutate(project.id); }}
-                                className="p-2 text-red-500 hover:bg-red-50 rounded"
+                                className="p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors"
                             >
                                 <Trash2 size={18} />
                             </button>
@@ -105,36 +108,57 @@ const ProjectManager = () => {
             </div>
 
             {isModalOpen && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
-                    <div className="glass w-full max-w-lg p-8 rounded-3xl relative my-8">
-                        <button onClick={handleClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+                    <div className="bg-white dark:bg-dark-lighter w-full max-w-lg p-8 rounded-3xl relative shadow-2xl border border-white/20 dark:border-slate-800 my-8">
+                        <button onClick={handleClose} className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
                             <X size={24} />
                         </button>
-                        <h3 className="text-2xl font-bold mb-6">{editingProject?.id ? 'Edit Project' : 'New Project'}</h3>
-                        <form onSubmit={handleSubmit} className="space-y-4">
+                        <h3 className="text-2xl font-bold mb-6 text-slate-900 dark:text-white flex items-center">
+                            {editingProject?.id ? <Edit2 className="mr-3 text-primary-500" /> : <Plus className="mr-3 text-primary-500" />}
+                            {editingProject?.id ? 'Edit Project' : 'New Project'}
+                        </h3>
+                        <form onSubmit={handleSubmit} className="space-y-5">
                             <div>
-                                <label className="block text-sm font-medium mb-1">Title</label>
-                                <input name="title" defaultValue={editingProject?.title} className="input-field" required />
+                                <label className="block text-sm font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Project Title</label>
+                                <input name="title" defaultValue={editingProject?.title} className="input-field" placeholder="e.g. Portfolio Website" required />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1">Description</label>
-                                <textarea name="description" defaultValue={editingProject?.description} rows="3" className="input-field" required />
+                                <label className="block text-sm font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Description</label>
+                                <textarea name="description" defaultValue={editingProject?.description} rows="3" className="input-field py-3" placeholder="Describe your project..." required />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1">Tech Stack (comma separated)</label>
-                                <input name="tech_stack" defaultValue={editingProject?.tech_stack?.join(', ')} className="input-field" placeholder="React, Node, etc." />
+                                <label className="block text-sm font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Tech Stack (comma separated)</label>
+                                <input name="tech_stack" defaultValue={editingProject?.tech_stack?.join(', ')} className="input-field" placeholder="React, Node.js, Tailwind" />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1">Live URL</label>
-                                <input name="live_url" defaultValue={editingProject?.live_url} className="input-field" />
+                                <label className="block text-sm font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Live URL</label>
+                                <input name="live_url" defaultValue={editingProject?.live_url} className="input-field" placeholder="https://..." />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1">Image {uploadLoading && '(Uploading...)'}</label>
-                                <input type="file" onChange={handleFileUpload} className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100" />
-                                {editingProject?.image_url && <img src={editingProject.image_url} className="mt-2 w-32 h-20 object-cover rounded-lg" />}
+                                <label className="block text-sm font-semibold mb-1.5 text-slate-700 dark:text-slate-300">
+                                    Project Image {uploadLoading && <span className="text-primary-500 text-xs ml-2 animate-pulse">(Uploading...)</span>}
+                                </label>
+                                <div className="mt-1 flex items-center space-x-4">
+                                    <div className="relative group flex-shrink-0">
+                                        <img
+                                            src={editingProject?.image_url || "https://via.placeholder.com/150"}
+                                            className="w-24 h-16 object-cover rounded-xl border-2 border-slate-100 dark:border-slate-800"
+                                            alt="Preview"
+                                        />
+                                        <input
+                                            type="file"
+                                            onChange={handleFileUpload}
+                                            className="absolute inset-0 opacity-0 cursor-pointer"
+                                        />
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl">
+                                            <Plus size={20} className="text-white" />
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">Click image to upload new preview. Recommended: 800x600px</p>
+                                </div>
                             </div>
-                            <button type="submit" className="w-full btn-primary py-3" disabled={upsertMutation.isLoading}>
-                                {editingProject?.id ? 'Update Project' : 'Create Project'}
+                            <button type="submit" className="w-full btn-primary py-3.5 mt-2 flex items-center justify-center" disabled={upsertMutation.isLoading}>
+                                {upsertMutation.isLoading ? 'Processing...' : (editingProject?.id ? 'Update Project' : 'Create Project')}
                             </button>
                         </form>
                     </div>

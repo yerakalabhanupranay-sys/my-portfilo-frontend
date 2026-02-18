@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Sun, Moon } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence, useScroll, useSpring } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { profileService } from '../services/api';
+import useTheme from '../hooks/useTheme';
 
 const Navbar = () => {
     const { data: profile } = useQuery({
@@ -12,16 +13,23 @@ const Navbar = () => {
     });
 
     const [isOpen, setIsOpen] = useState(false);
-    const [isDark, setIsDark] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+    const { theme, toggleTheme } = useTheme();
     const location = useLocation();
 
+    // Scroll progress indicator
+    const { scrollYProgress } = useScroll();
+    const scaleX = useSpring(scrollYProgress, {
+        stiffness: 100,
+        damping: 30,
+        restDelta: 0.001
+    });
+
     useEffect(() => {
-        if (isDark) {
-            document.body.classList.add('dark');
-        } else {
-            document.body.classList.remove('dark');
-        }
-    }, [isDark]);
+        const handleScroll = () => setScrolled(window.scrollY > 20);
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     const navLinks = [
         { name: 'Home', path: '/' },
@@ -31,90 +39,187 @@ const Navbar = () => {
         { name: 'Contact', path: '/contact' },
     ];
 
+    const mobileMenuVariants = {
+        closed: { opacity: 0, scale: 0.95, y: -20 },
+        open: {
+            opacity: 1,
+            scale: 1,
+            y: 0,
+            transition: {
+                duration: 0.3,
+                staggerChildren: 0.1,
+                delayChildren: 0.2
+            }
+        }
+    };
+
+    const linkVariants = {
+        closed: { opacity: 0, x: -20 },
+        open: { opacity: 1, x: 0 }
+    };
+
     return (
-        <nav className="sticky top-0 z-50 glass shadow-sm">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between h-16 items-center">
-                    <div className="flex-shrink-0 flex items-center">
-                        <Link to="/" className="text-2xl font-outfit font-bold gradient-text">
-                            {profile?.name || 'DevPortfolio'}
-                        </Link>
-                    </div>
+        <>
+            {/* Scroll Progress Bar */}
+            <Motion.div
+                className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-500 via-indigo-500 to-primary-600 origin-left z-[110]"
+                style={{ scaleX }}
+            />
 
-                    {/* Desktop Links */}
-                    <div className="hidden md:flex items-center space-x-8">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.name}
-                                to={link.path}
-                                className={`text-sm font-medium transition-colors hover:text-primary-500 ${location.pathname === link.path ? 'text-primary-500' : 'text-slate-600 dark:text-slate-300'
-                                    }`}
-                            >
-                                {link.name}
-                            </Link>
-                        ))}
-                        <button
-                            onClick={() => setIsDark(!isDark)}
-                            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-dark-light transition-colors"
-                        >
-                            {isDark ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-slate-600" />}
-                        </button>
-                        <Link to="/contact" className="btn-primary">
-                            Hire Me
-                        </Link>
-                    </div>
-
-                    {/* Mobile menu button */}
-                    <div className="md:hidden flex items-center space-x-4">
-                        <button
-                            onClick={() => setIsDark(!isDark)}
-                            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-dark-light"
-                        >
-                            {isDark ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-slate-600" />}
-                        </button>
-                        <button
-                            onClick={() => setIsOpen(!isOpen)}
-                            className="p-2 rounded-md text-slate-600 dark:text-slate-300"
-                        >
-                            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {/* Mobile Links */}
-            <AnimatePresence>
-                {isOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="md:hidden glass border-t border-slate-100 dark:border-slate-800"
+            <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${scrolled ? 'py-4' : 'py-6'}`}>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <Motion.div
+                        initial={{ y: -100 }}
+                        animate={{ y: 0 }}
+                        transition={{ type: "spring", stiffness: 100, damping: 20 }}
+                        className={`glass rounded-[2rem] px-6 md:px-10 h-20 flex justify-between items-center transition-all duration-500 ${scrolled ? 'bg-white/90 dark:bg-dark-lighter/90 shadow-2xl shadow-primary-500/10 backdrop-blur-xl' : 'bg-white/70 dark:bg-dark-lighter/70 border-transparent shadow-lg'
+                            }`}
                     >
-                        <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                            {navLinks.map((link) => (
-                                <Link
-                                    key={link.name}
-                                    to={link.path}
-                                    onClick={() => setIsOpen(false)}
-                                    className={`block px-3 py-2 rounded-md text-base font-medium ${location.pathname === link.path
-                                        ? 'bg-primary-50 text-primary-500 dark:bg-primary-900/20'
-                                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-dark-light'
-                                        }`}
+                        <div className="flex-shrink-0 flex items-center">
+                            <Link to="/" className="text-2xl font-outfit font-black tracking-tighter group">
+                                <Motion.span
+                                    className="gradient-text"
+                                    whileHover={{ scale: 1.05 }}
+                                    transition={{ type: "spring", stiffness: 300 }}
                                 >
-                                    {link.name}
-                                </Link>
-                            ))}
-                            <div className="px-3 py-2">
-                                <Link to="/contact" onClick={() => setIsOpen(false)} className="w-full btn-primary block text-center">
-                                    Hire Me
-                                </Link>
-                            </div>
+                                    {profile?.name || 'DevPortfolio'}
+                                </Motion.span>
+                            </Link>
                         </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </nav>
+
+                        {/* Desktop Navigation */}
+                        <div className="hidden md:flex items-center gap-2">
+                            {navLinks.map((link, index) => {
+                                const isActive = location.pathname === link.path;
+                                return (
+                                    <Motion.div
+                                        key={link.name}
+                                        initial={{ opacity: 0, y: -20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: index * 0.1 }}
+                                    >
+                                        <Link
+                                            to={link.path}
+                                            className="relative px-6 py-3 font-bold text-slate-600 dark:text-slate-300 hover:text-primary-500 dark:hover:text-primary-400 transition-colors group"
+                                        >
+                                            <span className="relative z-10">{link.name}</span>
+                                            {isActive && (
+                                                <Motion.div
+                                                    layoutId="activeNav"
+                                                    className="absolute inset-0 bg-primary-50 dark:bg-primary-900/20 rounded-xl"
+                                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                                />
+                                            )}
+                                            <Motion.div
+                                                className="absolute bottom-0 left-1/2 w-0 h-0.5 bg-primary-500 group-hover:w-1/2 group-hover:left-1/4 transition-all duration-300"
+                                            />
+                                        </Link>
+                                    </Motion.div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Theme Toggle & Mobile Menu */}
+                        <div className="flex items-center gap-4">
+                            <Motion.button
+                                onClick={toggleTheme}
+                                whileHover={{ scale: 1.1, rotate: 180 }}
+                                whileTap={{ scale: 0.9 }}
+                                className="p-3 rounded-xl bg-slate-100 dark:bg-dark-light text-slate-600 dark:text-slate-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-500 transition-all"
+                                aria-label="Toggle theme"
+                            >
+                                <AnimatePresence mode="wait">
+                                    {theme === 'dark' ? (
+                                        <Motion.div
+                                            key="sun"
+                                            initial={{ rotate: -90, opacity: 0 }}
+                                            animate={{ rotate: 0, opacity: 1 }}
+                                            exit={{ rotate: 90, opacity: 0 }}
+                                            transition={{ duration: 0.2 }}
+                                        >
+                                            <Sun size={20} />
+                                        </Motion.div>
+                                    ) : (
+                                        <Motion.div
+                                            key="moon"
+                                            initial={{ rotate: 90, opacity: 0 }}
+                                            animate={{ rotate: 0, opacity: 1 }}
+                                            exit={{ rotate: -90, opacity: 0 }}
+                                            transition={{ duration: 0.2 }}
+                                        >
+                                            <Moon size={20} />
+                                        </Motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </Motion.button>
+
+                            <Motion.button
+                                onClick={() => setIsOpen(!isOpen)}
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                className="md:hidden p-3 rounded-xl bg-slate-100 dark:bg-dark-light text-slate-600 dark:text-slate-300"
+                                aria-label="Toggle menu"
+                            >
+                                <AnimatePresence mode="wait">
+                                    {isOpen ? (
+                                        <Motion.div
+                                            key="close"
+                                            initial={{ rotate: -90, opacity: 0 }}
+                                            animate={{ rotate: 0, opacity: 1 }}
+                                            exit={{ rotate: 90, opacity: 0 }}
+                                        >
+                                            <X size={24} />
+                                        </Motion.div>
+                                    ) : (
+                                        <Motion.div
+                                            key="menu"
+                                            initial={{ rotate: 90, opacity: 0 }}
+                                            animate={{ rotate: 0, opacity: 1 }}
+                                            exit={{ rotate: -90, opacity: 0 }}
+                                        >
+                                            <Menu size={24} />
+                                        </Motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </Motion.button>
+                        </div>
+                    </Motion.div>
+                </div>
+
+                {/* Mobile Menu */}
+                <AnimatePresence>
+                    {isOpen && (
+                        <Motion.div
+                            variants={mobileMenuVariants}
+                            initial="closed"
+                            animate="open"
+                            exit="closed"
+                            className="md:hidden mt-4 mx-4"
+                        >
+                            <div className="glass rounded-3xl p-6 space-y-2 bg-white/95 dark:bg-dark-lighter/95 backdrop-blur-xl shadow-2xl">
+                                {navLinks.map((link) => {
+                                    const isActive = location.pathname === link.path;
+                                    return (
+                                        <Motion.div key={link.name} variants={linkVariants}>
+                                            <Link
+                                                to={link.path}
+                                                onClick={() => setIsOpen(false)}
+                                                className={`block px-6 py-4 rounded-2xl font-bold transition-all ${isActive
+                                                    ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30'
+                                                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-light'
+                                                    }`}
+                                            >
+                                                {link.name}
+                                            </Link>
+                                        </Motion.div>
+                                    );
+                                })}
+                            </div>
+                        </Motion.div>
+                    )}
+                </AnimatePresence>
+            </nav>
+        </>
     );
 };
 

@@ -26,6 +26,11 @@ export default {
                     light: '#334155',
                 }
             },
+            boxShadow: {
+                glass: '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+                'card-hover': '0 20px 50px rgba(79, 70, 229, 0.15)',
+                'card-hover-dark': '0 20px 50px rgba(0, 0, 0, 0.3)',
+            },
             fontFamily: {
                 outfit: ['Outfit', 'sans-serif'],
                 inter: ['Inter', 'sans-serif'],

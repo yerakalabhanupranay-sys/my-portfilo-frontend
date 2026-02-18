@@ -17,33 +17,55 @@ import Dashboard from './pages/admin/Dashboard';
 // Components
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import PublicLayout from './components/PublicLayout';
 import ProtectedRoute from './components/ProtectedRoute';
+
+import { statsService } from './services/api';
 
 const queryClient = new QueryClient();
 
 function App() {
+  React.useEffect(() => {
+    const incrementViews = async () => {
+      try {
+        const hasIncremented = sessionStorage.getItem('hasIncrementedViews');
+        if (!hasIncremented) {
+          await statsService.incrementViews();
+          sessionStorage.setItem('hasIncrementedViews', 'true');
+        }
+      } catch (err) {
+        console.error('Failed to increment views:', err);
+      }
+    };
+    incrementViews();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <div className="flex flex-col min-h-screen">
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<><Navbar /><main className="flex-grow"><Home /></main><Footer /></>} />
-            <Route path="/about" element={<><Navbar /><main className="flex-grow"><About /></main><Footer /></>} />
-            <Route path="/projects" element={<><Navbar /><main className="flex-grow"><Projects /></main><Footer /></>} />
-            <Route path="/services" element={<><Navbar /><main className="flex-grow"><Services /></main><Footer /></>} />
-            <Route path="/contact" element={<><Navbar /><main className="flex-grow"><Contact /></main><Footer /></>} />
+        <Routes>
+          {/* Public Routes - Wrapped in PublicLayout */}
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/projects" element={<Projects />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/contact" element={<Contact />} />
+          </Route>
 
-            {/* Admin Routes */}
-            <Route path="/admin/login" element={<Login />} />
-            <Route path="/admin/*" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } />
-          </Routes>
-          <Toaster position="bottom-right" />
-        </div>
+          {/* Admin Routes */}
+          <Route path="/admin/login" element={<Login />} />
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/admin/*" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+
+          {/* 404 Catch All */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+        <Toaster position="bottom-right" />
       </Router>
     </QueryClientProvider>
   );
