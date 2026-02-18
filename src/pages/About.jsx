@@ -133,7 +133,7 @@ const About = () => {
                             Get Resume
                         </a>
                         <Link to="/contact" className="btn-outline group">
-                            Start a Conversation <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
+                            Start a Conversations <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
                         </Link>
                     </div>
                 </Motion.div>
