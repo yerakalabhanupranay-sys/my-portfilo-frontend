@@ -52,7 +52,7 @@ const About = () => {
                                 className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                                 onError={(e) => {
                                     e.target.onerror = null;
-                                    e.target.src = "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&q=80&w=1000";
+                                    e.target.src = "https://res.cloudinary.com/depxdfmjj/image/upload/v1771493992/WhatsApp_Image_2026-02-17_at_2.39.12_PM_b4apdn.jpg";
                                 }}
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-end p-8 md:p-12">
