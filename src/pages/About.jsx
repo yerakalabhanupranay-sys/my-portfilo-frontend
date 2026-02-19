@@ -47,7 +47,7 @@ const About = () => {
                     <div className="relative z-10">
                         <div className="aspect-[4/5] bg-slate-200 dark:bg-dark-light rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden shadow-2xl relative group">
                             <img
-                                src={profile?.image_url?.startsWith('http') ? profile.image_url : `${import.meta.env.VITE_API_URL?.replace('/api', '')}${profile?.image_url}` || "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&q=80&w=1000"}
+                                src={profile?.image_url?.startsWith('http') ? profile.image_url : `${import.meta.env.VITE_API_URL?.replace('/api', '')}${profile?.image_url}` || "https://res.cloudinary.com/depxdfmjj/image/upload/v1771493992/WhatsApp_Image_2026-02-17_at_2.39.12_PM_b4apdn.jpg"}
                                 alt="Profile"
                                 className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                                 onError={(e) => {
